@@ -2,16 +2,24 @@
 using CheeseMVC.Models;
 using System.Collections.Generic;
 using CheeseMVC.ViewModels;
+using CheeseMVC.Data;
+using System.Linq;
 
 namespace CheeseMVC.Controllers
 {
     public class CheeseController : Controller
     {
+        private CheeseDbContext cheeseDbContext;
+
+        public CheeseController(CheeseDbContext context)
+        {
+            this.cheeseDbContext = context;
+        }
 
         // GET: /<controller>/
         public IActionResult Index()
         {
-            List<Cheese> cheeses = CheeseData.GetAll();
+            List<Cheese> cheeses = this.cheeseDbContext.Cheeses.ToList();
 
             return View(cheeses);
         }
@@ -35,7 +43,8 @@ namespace CheeseMVC.Controllers
                     Type = addCheeseViewModel.Type
                 };
 
-                CheeseData.Add(newCheese);
+                this.cheeseDbContext.Cheeses.Add(newCheese);
+                this.cheeseDbContext.SaveChanges();
 
                 return Redirect("/Cheese");
             }
@@ -46,7 +55,7 @@ namespace CheeseMVC.Controllers
         public IActionResult Remove()
         {
             ViewBag.title = "Remove Cheeses";
-            ViewBag.cheeses = CheeseData.GetAll();
+            ViewBag.cheeses = this.cheeseDbContext.Cheeses.ToList();
             return View();
         }
 
@@ -55,7 +64,10 @@ namespace CheeseMVC.Controllers
         {
             foreach (int cheeseId in cheeseIds)
             {
-                CheeseData.Remove(cheeseId);
+                //var cheese = this.cheeseDbContext.Cheeses.Find(new { ID = cheeseId });
+                var cheese = this.cheeseDbContext.Cheeses.Single<Cheese>(c => c.ID == cheeseId);
+                this.cheeseDbContext.Cheeses.Remove(cheese);
+                this.cheeseDbContext.SaveChanges();
             }
 
             return Redirect("/");
